@@ -1,0 +1,1 @@
+#include "Parametrs.h"
