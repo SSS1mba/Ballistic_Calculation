@@ -11,15 +11,15 @@ Parametrs::Parametrs()
 
 std::ostream& operator<<(std::ostream& os, const Parametrs& parametrs)
 {
-    os << std::fixed << std::setprecision(6);
-     os << parametrs.start_velocity << " "
-        << parametrs.start_acceleration << " "
-        << parametrs.throwing_angle << " "
-        << parametrs.max_height << " "
-        << parametrs.max_distance << " "
-        << parametrs.total_time << " "
-        << parametrs.rising_time << " "
-        << parametrs.faling_time;
+    os << std::fixed << std::setprecision(15);
+     os << parametrs.start_velocity << "\n"
+        << parametrs.start_acceleration << "\n"
+        << parametrs.throwing_angle << "\n"
+        << parametrs.max_height << "\n"
+        << parametrs.max_distance << "\n"
+        << parametrs.total_time << "\n"
+        << parametrs.rising_time << "\n"
+        << parametrs.faling_time << "\n";
     return os;
 }
 

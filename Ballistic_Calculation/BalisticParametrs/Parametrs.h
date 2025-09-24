@@ -7,6 +7,8 @@
 
 constexpr double PI = 3.141592653589793;
 constexpr double UNITIALISED_VARIABLE = std::numeric_limits<double>::max();
+constexpr size_t NUMBER_OF_PARAMETRS = 8;
+
 #define V_0 start_velocity
 #define A_0 start_acceleration
 #define ALPHA throwing_angle
@@ -15,6 +17,7 @@ constexpr double UNITIALISED_VARIABLE = std::numeric_limits<double>::max();
 #define T_t total_time
 #define T_f faling_time
 #define T_r rising_time
+
 
 struct Parametrs
 {
@@ -28,6 +31,7 @@ struct Parametrs
 	double faling_time;
 	double rising_time;
 
+	inline static bool is_initialised(double value) noexcept { return value != UNITIALISED_VARIABLE; }
 	friend std::ostream& operator<<(std::ostream& os, const Parametrs& parametrs);
 	friend std::istream& operator>>(std::istream& is, Parametrs& parametrs);
 };

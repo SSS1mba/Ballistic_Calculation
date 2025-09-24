@@ -10,20 +10,23 @@ int main()
     params.max_distance = 2;
     params.max_height = 3;
     params.rising_time = 4;
-    params.rising_time = 5;
-    params.start_acceleration = 6;
-    params.start_velocity = 7;
-    params.throwing_angle = 8;
-    params.T_t = 9;
+    params.start_acceleration = 5;
+    params.start_velocity = 6;
+    params.throwing_angle = 7;
+    params.T_t = 8;
 
-    std::ofstream file("params.txt");
+    BalisticSolver::solve(params,new Parametrs);
+   
+    
+    /* std::ofstream file("params.txt");
     file << params;
     file.close();
 
     Parametrs params2;
     std::ifstream file_in("params.txt");
     file_in >> params2;
-    file_in.close();
+    std::cout << params2.is_initialised(params2.T_f);
+    file_in.close();*/
 }
 
 
