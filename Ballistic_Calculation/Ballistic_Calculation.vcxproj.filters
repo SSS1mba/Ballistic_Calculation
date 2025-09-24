@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Project\MathVector.cpp">
+    <ClCompile Include="Projections\MathVector.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="BalisticParametrs\Parametrs.cpp">
@@ -27,12 +27,12 @@
     <ClCompile Include="BalisticParametrs\BalisticSolver.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Project\Projector.cpp">
+    <ClCompile Include="Projections\Projector.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Project\MathVector.h">
+    <ClInclude Include="Projections\MathVector.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="BalisticParametrs\Parametrs.h">
@@ -41,7 +41,7 @@
     <ClInclude Include="BalisticParametrs\BalisticSolver.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Project\Projector.h">
+    <ClInclude Include="Projections\Projector.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

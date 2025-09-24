@@ -1,5 +1,38 @@
 #pragma once
-class Parametrs
+#include <cmath>
+#include <math.h>
+#include <iostream>
+#include <numeric>
+#include <iomanip>
+
+constexpr double PI = 3.141592653589793;
+constexpr double UNITIALISED_VARIABLE = std::numeric_limits<double>::max();
+#define V_0 start_velocity
+#define A_0 start_acceleration
+#define ALPHA throwing_angle
+#define H max_height
+#define L max_distance
+#define T_t total_time
+#define T_f faling_time
+#define T_r rising_time
+
+struct Parametrs
 {
+	Parametrs();
+	double start_velocity;
+	double start_acceleration;
+	double throwing_angle;
+	double max_height;
+	double max_distance;
+	double total_time;
+	double faling_time;
+	double rising_time;
+
+	friend std::ostream& operator<<(std::ostream& os, const Parametrs& parametrs);
+	friend std::istream& operator>>(std::istream& is, Parametrs& parametrs);
 };
+
+
+inline double deg2rad(double deg)  { return deg * PI / 180.0; }
+inline double rad2deg(double rad)  { return rad * 180.0 / PI; }
 

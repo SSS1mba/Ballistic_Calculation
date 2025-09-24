@@ -102,6 +102,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\makno\source\repos\Ballistic_Calculation\Ballistic_Calculation\Projections;C:\Users\makno\source\repos\Ballistic_Calculation\Ballistic_Calculation\BalisticParametrs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,15 +127,15 @@
   <ItemGroup>
     <ClCompile Include="BalisticParametrs\BalisticSolver.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Project\MathVector.cpp" />
+    <ClCompile Include="Projections\MathVector.cpp" />
     <ClCompile Include="BalisticParametrs\Parametrs.cpp" />
-    <ClCompile Include="Project\Projector.cpp" />
+    <ClCompile Include="Projections\Projector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BalisticParametrs\BalisticSolver.h" />
-    <ClInclude Include="Project\MathVector.h" />
+    <ClInclude Include="Projections\MathVector.h" />
     <ClInclude Include="BalisticParametrs\Parametrs.h" />
-    <ClInclude Include="Project\Projector.h" />
+    <ClInclude Include="Projections\Projector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
