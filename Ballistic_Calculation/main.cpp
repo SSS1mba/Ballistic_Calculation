@@ -14,7 +14,7 @@ int main()
     params.rising_time = 4;
     params.start_acceleration = 5;
     params.start_velocity = 6;
-    params.throwing_angle = 7;
+    params.throwing_angle_degrees = 7;
     params.T_t = 8;
     
 

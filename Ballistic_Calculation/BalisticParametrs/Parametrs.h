@@ -11,7 +11,7 @@ constexpr size_t NUMBER_OF_PARAMETRS = 8;
 
 #define V_0 start_velocity
 #define A_0 start_acceleration
-#define ALPHA throwing_angle
+#define ALPHA throwing_angle_degrees
 #define H max_height
 #define L max_distance
 #define T_t total_time
@@ -24,7 +24,7 @@ struct Parametrs
 	Parametrs();
 	double start_velocity;
 	double start_acceleration;
-	double throwing_angle;
+	double throwing_angle_degrees;	
 	double max_height;
 	double max_distance;
 	double total_time;
