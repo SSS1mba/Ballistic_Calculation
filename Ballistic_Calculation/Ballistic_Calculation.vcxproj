@@ -133,6 +133,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BalisticParametrs\BalisticSolver.h" />
+    <ClInclude Include="Benchmark.h" />
     <ClInclude Include="Projections\MathVector.h" />
     <ClInclude Include="BalisticParametrs\Parametrs.h" />
     <ClInclude Include="Projections\Projector.h" />
