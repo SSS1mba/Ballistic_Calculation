@@ -1,8 +1,41 @@
 #include "BalisticSolver.h"
 
-BalisticSolver::BalisticSolver() 
+BalisticSolver::BalisticSolver(const Parametrs& parametrs_to_solve)
+    : p(parametrs_to_solve)
 {
-	
+    bool temp;
+
+    // 0. V_0
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.start_velocity);
+    solve_functions.emplace_back(std::pair(find_start_velocity, temp));
+
+    // 1. A_0
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.start_acceleration);
+    solve_functions.emplace_back(std::pair(find_start_acceleration, temp));
+
+    // 2. ALPHA
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.throwing_angle_degrees);
+    solve_functions.emplace_back(std::pair(find_throwing_angle_degrees, temp));
+
+    // 3. H
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.max_height);
+    solve_functions.emplace_back(std::pair(find_max_height, temp));
+
+    // 4. L
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.max_distance);
+    solve_functions.emplace_back(std::pair(find_max_distance, temp));
+
+    // 5. T_t
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.total_time);
+    solve_functions.emplace_back(std::pair(find_total_time, temp));
+
+    // 6. T_f
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.faling_time);
+    solve_functions.emplace_back(std::pair(find_faling_time, temp));
+
+    // 7. T_r
+    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.rising_time);
+    solve_functions.emplace_back(std::pair(find_rising_time, temp));
 }
 
 bool BalisticSolver::solve(const Parametrs& input, Parametrs* result) const
@@ -10,22 +43,27 @@ bool BalisticSolver::solve(const Parametrs& input, Parametrs* result) const
 	if (result == nullptr) throw std::invalid_argument("BalisticSolver -> solve() -> result == nullptr");
 
 	size_t known_parametrs = number_of_initialised_parametrs(input);
-	size_t temp;
+	size_t temp_known_parametrs;
+    double value_of_parametr;;
 	
 	while (true)
 	{
-		temp = known_parametrs;
+        temp_known_parametrs = known_parametrs;
 
-		//все функции для поиска параметров
+        for (auto& el : solve_functions)
+        {
+            if (el.second) continue;
+            auto a = el.first;
+            a();
+        }
 
 		if (known_parametrs == NUMBER_OF_PARAMETRS) return true;
-		if (known_parametrs == temp) return false;	// if we couldn't find any values during the loop, we're at a dead end  :(
-		temp = known_parametrs;
+		if (known_parametrs == temp_known_parametrs) return false;	// if we couldn't find any values during the loop, we're at a dead end  :(
+        temp_known_parametrs = known_parametrs;
 	}
 
 	return true;
 }
-
 
 size_t BalisticSolver::number_of_initialised_parametrs(const Parametrs& input)const noexcept 
 {
@@ -43,10 +81,11 @@ size_t BalisticSolver::number_of_initialised_parametrs(const Parametrs& input)co
 	return result;
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////
 
-
-double BalisticSolver::find_start_velocity(const Parametrs& p) const noexcept
+double BalisticSolver::find_start_velocity()         const noexcept
 {
 
     if (!Parametrs::is_initialised(p.ALPHA)) return UNITIALISED_VARIABLE;
@@ -84,7 +123,7 @@ double BalisticSolver::find_start_velocity(const Parametrs& p) const noexcept
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_start_acceleration(const Parametrs& p) const noexcept
+double BalisticSolver::find_start_acceleration()     const noexcept
 {
 
     // Через скорость, угол и высоту
@@ -129,7 +168,7 @@ double BalisticSolver::find_start_acceleration(const Parametrs& p) const noexcep
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_throwing_angle_degrees(const Parametrs& p) const noexcept
+double BalisticSolver::find_throwing_angle_degrees() const noexcept
 
 {
     if (!Parametrs::is_initialised(p.V_0) || p.V_0 <= 0)
@@ -167,7 +206,7 @@ double BalisticSolver::find_throwing_angle_degrees(const Parametrs& p) const noe
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_max_height(const Parametrs& p) const noexcept
+double BalisticSolver::find_max_height()             const noexcept
 
 {
     if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
@@ -199,7 +238,7 @@ double BalisticSolver::find_max_height(const Parametrs& p) const noexcept
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_max_distance(const Parametrs& p) const noexcept
+double BalisticSolver::find_max_distance()           const noexcept
 
 {
     if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
@@ -223,21 +262,10 @@ double BalisticSolver::find_max_distance(const Parametrs& p) const noexcept
         if (l >= 0 && std::isfinite(l)) return l;
     }
 
-    // Решение через скорость и время
-    if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.T_t))
-    {
-        Parametrs temp = p;
-        temp.ALPHA = find_throwing_angle_degrees(p);
-        if (Parametrs::is_initialised(temp.ALPHA)) {
-            return find_max_distance(temp);
-        }
-    }
-
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_total_time(const Parametrs& p) const noexcept
+double BalisticSolver::find_total_time()             const noexcept
 
 {
     if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
@@ -258,21 +286,11 @@ double BalisticSolver::find_total_time(const Parametrs& p) const noexcept
         if (t >= 0 && std::isfinite(t)) return t;
     }
 
-    // Решение через дальность и скорость
-    if (Parametrs::is_initialised(p.L) &&
-        Parametrs::is_initialised(p.V_0))
-    {
-        Parametrs temp = p;
-        temp.ALPHA = find_throwing_angle_degrees(p);
-        if (Parametrs::is_initialised(temp.ALPHA)) {
-            return find_total_time(temp);
-        }
-    }
 
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_faling_time(const Parametrs& p) const noexcept
+double BalisticSolver::find_faling_time()            const noexcept
 
 {
     if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
@@ -306,7 +324,7 @@ double BalisticSolver::find_faling_time(const Parametrs& p) const noexcept
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_rising_time(const Parametrs& p) const noexcept
+double BalisticSolver::find_rising_time()            const noexcept
 
 {
     if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
