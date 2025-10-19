@@ -44,10 +44,10 @@ private:
     // 2. ALPHA
     double find_throwing_angle_degrees() const noexcept;
 
-    // 3. H
+    // 3. M_H
     double find_max_height() const noexcept;
 
-    // 3. L
+    // 3. M_L
     double find_max_distance() const noexcept;
 
     // 4. T_t

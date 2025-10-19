@@ -12,8 +12,8 @@ constexpr size_t NUMBER_OF_PARAMETRS = 8;
 #define V_0 start_velocity
 #define A_0 start_acceleration
 #define ALPHA throwing_angle_degrees
-#define H max_height
-#define L max_distance
+#define M_H max_height
+#define M_L max_distance
 #define T_t total_time
 #define T_f faling_time
 #define T_r rising_time
