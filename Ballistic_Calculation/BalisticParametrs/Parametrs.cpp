@@ -8,6 +8,32 @@ Parametrs::Parametrs()
 {
 }
 
+Parametrs::Parametrs(const Parametrs& other)
+{
+    start_velocity = other.start_velocity;
+    start_acceleration = other.start_acceleration;
+    throwing_angle_degrees = other.throwing_angle_degrees;
+    max_height = other.max_height;
+    max_distance = other.max_distance;
+    total_time = other.total_time;
+    faling_time = other.faling_time;
+    rising_time = other.rising_time;
+}
+
+Parametrs& Parametrs::operator=(const Parametrs& other) {
+    if (this != &other) {
+        start_velocity = other.start_velocity;
+        start_acceleration = other.start_acceleration;
+        throwing_angle_degrees = other.throwing_angle_degrees;
+        max_height = other.max_height;
+        max_distance = other.max_distance;
+        total_time = other.total_time;
+        faling_time = other.faling_time;
+        rising_time = other.rising_time;
+    }
+    return *this;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const Parametrs& parametrs)
 {

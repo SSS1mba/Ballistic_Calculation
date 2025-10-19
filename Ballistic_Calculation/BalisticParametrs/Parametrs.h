@@ -30,6 +30,7 @@ constexpr size_t index_T_r		 = 7;
 struct Parametrs
 {
 	Parametrs();
+	Parametrs(const Parametrs& other );
 	double start_velocity;
 	double start_acceleration;
 	double throwing_angle_degrees;	
@@ -40,6 +41,8 @@ struct Parametrs
 	double rising_time;
 
 	inline static bool is_initialised(double value) noexcept { return value != UNITIALISED_VARIABLE; }
+
+	Parametrs& operator=(const Parametrs& other);
 	friend std::ostream& operator<<(std::ostream& os, const Parametrs& parametrs);
 	friend std::istream& operator>>(std::istream& is, Parametrs& parametrs);
 };

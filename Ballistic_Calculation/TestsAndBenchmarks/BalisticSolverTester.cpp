@@ -1,26 +1,28 @@
 #include "BalisticSolverTester.h"
 
-SimpleBalisticTester::SimpleBalisticTester() {
+BalisticTester::BalisticTester() {
     initialize_test_cases();
 }
 
-void SimpleBalisticTester::run_all_tests() {
+void BalisticTester::run_all_tests() {
     std::cout << "=== TESTING BALISTIC SOLVER ===\n\n";
 
-    // Test sequential version
     std::cout << "SEQUENTIAL VERSION:\n";
     std::cout << "===================\n";
     benchmark([this]() { run_sequential_tests(); });
 
-    // Test parallel version  
     std::cout << "\nPARALLEL VERSION:\n";
     std::cout << "================\n";
     benchmark([this]() { run_parallel_tests(); });
 
+    std::cout << "\nPARALLEL SMART VERSION:\n";
+    std::cout << "================\n";
+    benchmark([this]() { run_parallel_smart_tests(); });
+
     std::cout << "\n=== TESTING COMPLETED ===\n";
 }
 
-void SimpleBalisticTester::initialize_test_cases() {
+void BalisticTester::initialize_test_cases() {
     test_cases = {
         {
             "Full parameters set",
@@ -64,7 +66,7 @@ void SimpleBalisticTester::initialize_test_cases() {
     };
 }
 
-Parametrs SimpleBalisticTester::create_params(double v0, double a0, double alpha, double h, double l,
+Parametrs BalisticTester::create_params(double v0, double a0, double alpha, double h, double l,
     double t_t, double t_f, double t_r) {
     Parametrs p;
     p.start_velocity = v0;
@@ -78,7 +80,7 @@ Parametrs SimpleBalisticTester::create_params(double v0, double a0, double alpha
     return p;
 }
 
-void SimpleBalisticTester::run_sequential_tests() {
+void BalisticTester::run_sequential_tests() {
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
@@ -91,7 +93,7 @@ void SimpleBalisticTester::run_sequential_tests() {
     }
 }
 
-void SimpleBalisticTester::run_parallel_tests() {
+void BalisticTester::run_parallel_tests() {
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
@@ -99,6 +101,19 @@ void SimpleBalisticTester::run_parallel_tests() {
         Parametrs result;
 
         bool success = solver.solve_parallel(test_case.input, &result);
+
+        std::cout << (success ? " SUCCESS" : " FAILED") << "\n";
+    }
+}
+
+void BalisticTester::run_parallel_smart_tests() {
+    for (const auto& test_case : test_cases) {
+        std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
+
+        BalisticSolver solver(test_case.input);
+        Parametrs result;
+
+        bool success = solver.solve_parallel_smart(test_case.input, &result);
 
         std::cout << (success ? " SUCCESS" : " FAILED") << "\n";
     }

@@ -5,7 +5,11 @@
 #include <vector>
 #include <iomanip>
 
-class SimpleBalisticTester {
+class BalisticTester {
+public:
+    BalisticTester();
+    void run_all_tests();
+
 private:
     struct TestCase {
         std::string name;
@@ -19,8 +23,6 @@ private:
         double t_t, double t_f, double t_r);
     void run_sequential_tests();
     void run_parallel_tests();
+    void run_parallel_smart_tests();
 
-public:
-    SimpleBalisticTester();
-    void run_all_tests();
 };
