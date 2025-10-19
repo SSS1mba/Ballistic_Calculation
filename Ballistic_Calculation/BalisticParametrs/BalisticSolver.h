@@ -2,6 +2,8 @@
 #include "Parametrs.h"
 #include <vector>
 #include <functional>
+#include <future>
+#include <atomic>
 
 using BallisticFunction = std::function<double>;
 
@@ -10,8 +12,10 @@ class BalisticSolver
 {
 public:
 	BalisticSolver(const Parametrs& parametrs_to_solve);
-	 bool solve(const Parametrs& input, Parametrs* result) const;   //solves "input" and write results of calculations in "results"
-																	//throws std::invalid argument 
+	 bool solve(const Parametrs& input, Parametrs* result) const;            //solves "input" and write results of calculations in "results"
+																	         //throws std::invalid argument 
+
+     bool solve_parallel(const Parametrs& input, Parametrs* result) const;   //multitread version of "solve"
 
     size_t number_of_initialised_parametrs(const Parametrs& input) const noexcept;
 	
@@ -19,7 +23,7 @@ public:
 private:
 	// a template for functions that find a parameter:
 	/*
-    * // index of function(in _solve_function) . Parametr to solve
+    * // index of function(in _solve_function) . Parameter to solve
 	*  double find_parametr_name ()
 	* {
     *   1)the further algorithm implies that the value may already have been found. Check it
@@ -58,6 +62,5 @@ private:
 
 private:
     Parametrs p;
-    std::vector<std::pair<BallisticFunction, bool>> solve_functions;  //bool - решена ли переменная,за которую отвечает функция
 };
 

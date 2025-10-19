@@ -18,6 +18,14 @@ constexpr size_t NUMBER_OF_PARAMETRS = 8;
 #define T_f faling_time
 #define T_r rising_time
 
+constexpr size_t index_V_0		 = 0;
+constexpr size_t index_A_0		 = 1;
+constexpr size_t index_ALPHA	 = 2;
+constexpr size_t index_H		 = 3;
+constexpr size_t index_L		 = 4;
+constexpr size_t index_T_t		 = 5;
+constexpr size_t index_T_f		 = 6;
+constexpr size_t index_T_r		 = 7;
 
 struct Parametrs
 {

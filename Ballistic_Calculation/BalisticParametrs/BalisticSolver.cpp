@@ -1,68 +1,166 @@
-#include "BalisticSolver.h"
+ï»¿#include "BalisticSolver.h"
 
 BalisticSolver::BalisticSolver(const Parametrs& parametrs_to_solve)
     : p(parametrs_to_solve)
 {
-    bool temp;
-
-    // 0. V_0
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.start_velocity);
-    solve_functions.emplace_back(std::pair(find_start_velocity, temp));
-
-    // 1. A_0
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.start_acceleration);
-    solve_functions.emplace_back(std::pair(find_start_acceleration, temp));
-
-    // 2. ALPHA
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.throwing_angle_degrees);
-    solve_functions.emplace_back(std::pair(find_throwing_angle_degrees, temp));
-
-    // 3. H
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.max_height);
-    solve_functions.emplace_back(std::pair(find_max_height, temp));
-
-    // 4. L
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.max_distance);
-    solve_functions.emplace_back(std::pair(find_max_distance, temp));
-
-    // 5. T_t
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.total_time);
-    solve_functions.emplace_back(std::pair(find_total_time, temp));
-
-    // 6. T_f
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.faling_time);
-    solve_functions.emplace_back(std::pair(find_faling_time, temp));
-
-    // 7. T_r
-    temp = parametrs_to_solve.is_initialised(parametrs_to_solve.rising_time);
-    solve_functions.emplace_back(std::pair(find_rising_time, temp));
+   
 }
 
 bool BalisticSolver::solve(const Parametrs& input, Parametrs* result) const
 {
-	if (result == nullptr) throw std::invalid_argument("BalisticSolver -> solve() -> result == nullptr");
+    if (result == nullptr)
+        throw std::invalid_argument("BalisticSolver -> solve() -> result == nullptr");
 
-	size_t known_parametrs = number_of_initialised_parametrs(input);
-	size_t temp_known_parametrs;
-    double value_of_parametr;;
-	
-	while (true)
-	{
-        temp_known_parametrs = known_parametrs;
+    *result = input;
 
-        for (auto& el : solve_functions)
+    size_t known_parameters = number_of_initialised_parametrs(*result);
+    size_t temp_known_parameters;
+
+
+    std::vector<bool> calculated(NUMBER_OF_PARAMETRS, false);
+    auto mark_initialised = [&](const Parametrs& params) {
+        if (Parametrs::is_initialised(params.start_velocity))            calculated[index_V_0] = true;
+        if (Parametrs::is_initialised(params.start_acceleration))        calculated[index_A_0] = true;
+        if (Parametrs::is_initialised(params.throwing_angle_degrees))    calculated[index_ALPHA] = true;
+        if (Parametrs::is_initialised(params.max_height))                calculated[index_H] = true;
+        if (Parametrs::is_initialised(params.max_distance))              calculated[index_L] = true;
+        if (Parametrs::is_initialised(params.total_time))                calculated[index_T_t] = true;
+        if (Parametrs::is_initialised(params.faling_time))               calculated[index_T_f] = true;
+        if (Parametrs::is_initialised(params.rising_time))               calculated[index_T_r] = true;
+        };
+
+    mark_initialised(*result);
+
+    while (true)
+    {
+        temp_known_parameters = known_parameters;
+
+        for (size_t i = 0; i < NUMBER_OF_PARAMETRS; ++i)
         {
-            if (el.second) continue;
-            auto a = el.first;
-            a();
+            if (calculated[i]) continue; 
+
+            double value = UNITIALISED_VARIABLE;
+
+         
+            switch (i) {
+            case index_V_0:      value = this->find_start_velocity(); break;
+            case index_A_0:      value = this->find_start_acceleration(); break;
+            case index_ALPHA:    value = this->find_throwing_angle_degrees(); break;
+            case index_H:        value = this->find_max_height(); break;
+            case index_L:        value = this->find_max_distance(); break;
+            case index_T_t:      value = this->find_total_time(); break;
+            case index_T_f:      value = this->find_faling_time(); break;
+            case index_T_r:      value = this->find_rising_time(); break;
+            }
+
+            if (Parametrs::is_initialised(value))
+            {
+                switch (i) {
+                case index_V_0:      result->start_velocity = value; break;
+                case index_A_0:      result->start_acceleration = value; break;
+                case index_ALPHA:    result->throwing_angle_degrees = value; break;
+                case index_H:        result->max_height = value; break;
+                case index_L:        result->max_distance = value; break;
+                case index_T_t:      result->total_time = value; break;
+                case index_T_f:      result->faling_time = value; break;
+                case index_T_r:      result->rising_time = value; break;
+                }
+                calculated[i] = true;
+                ++known_parameters;
+            }
         }
 
-		if (known_parametrs == NUMBER_OF_PARAMETRS) return true;
-		if (known_parametrs == temp_known_parametrs) return false;	// if we couldn't find any values during the loop, we're at a dead end  :(
-        temp_known_parametrs = known_parametrs;
-	}
+        // Ð—ÐÐ©Ð˜Ð¢Ð ÐžÐ¢ Ð‘Ð•Ð¡ÐšÐžÐÐ•Ð§ÐÐžÐ“Ðž Ð¦Ð˜ÐšÐ›Ð
+        if (known_parameters == NUMBER_OF_PARAMETRS) return true;
+        if (known_parameters == temp_known_parameters) return false; // dead end 
+    }
 
-	return true;
+    return true;
+}
+
+bool BalisticSolver::solve_parallel(const Parametrs& input, Parametrs* result) const
+{
+    if (result == nullptr)
+        throw std::invalid_argument("BalisticSolver -> solve_parallel() -> result == nullptr");
+
+    *result = input;
+
+    std::atomic<size_t> known_parameters = number_of_initialised_parametrs(*result);
+    size_t temp_known_parameters;
+
+    std::vector<bool> calculated(NUMBER_OF_PARAMETRS, false);
+
+    auto mark_initialised = [&](const Parametrs& params) {
+        if (Parametrs::is_initialised(params.start_velocity)) calculated[index_V_0] = true;
+        if (Parametrs::is_initialised(params.start_acceleration)) calculated[index_A_0] = true;
+        if (Parametrs::is_initialised(params.throwing_angle_degrees)) calculated[index_ALPHA] = true;
+        if (Parametrs::is_initialised(params.max_height)) calculated[index_H] = true;
+        if (Parametrs::is_initialised(params.max_distance)) calculated[index_L] = true;
+        if (Parametrs::is_initialised(params.total_time)) calculated[index_T_t] = true;
+        if (Parametrs::is_initialised(params.faling_time)) calculated[index_T_f] = true;
+        if (Parametrs::is_initialised(params.rising_time)) calculated[index_T_r] = true;
+        };
+
+    mark_initialised(*result);
+
+    while (true)
+    {
+        temp_known_parameters = known_parameters;
+        std::vector<std::future<std::pair<size_t, double>>> futures;
+
+        for (size_t i = 0; i < NUMBER_OF_PARAMETRS; ++i)
+        {
+            if (calculated[i]) continue;
+
+            futures.push_back(std::async(std::launch::async,
+                [this, i, input_copy = *result]() mutable -> std::pair<size_t, double> {
+                    double value = UNITIALISED_VARIABLE;
+                    try {
+                        switch (i) {
+                        case index_V_0:   value = this->find_start_velocity(); break;
+                        case index_A_0:   value = this->find_start_acceleration(); break;
+                        case index_ALPHA: value = this->find_throwing_angle_degrees(); break;
+                        case index_H:     value = this->find_max_height(); break;
+                        case index_L:     value = this->find_max_distance(); break;
+                        case index_T_t:   value = this->find_total_time(); break;
+                        case index_T_f:   value = this->find_faling_time(); break;
+                        case index_T_r:   value = this->find_rising_time(); break;
+                        default:          value = UNITIALISED_VARIABLE; break;
+                        }
+                    }
+                    catch (...) {
+                        value = UNITIALISED_VARIABLE;
+                    }
+                    return { i, value };
+                }));
+        }
+
+        for (auto& future : futures)
+        {
+            auto [index, value] = future.get();  //structured binding
+
+            if (Parametrs::is_initialised(value))
+            {
+                switch (index) {
+                case index_V_0:   result->start_velocity = value; break;
+                case index_A_0:   result->start_acceleration = value; break;
+                case index_ALPHA: result->throwing_angle_degrees = value; break;
+                case index_H:     result->max_height = value; break;
+                case index_L:     result->max_distance = value; break;
+                case index_T_t:   result->total_time = value; break;
+                case index_T_f:   result->faling_time = value; break;
+                case index_T_r:   result->rising_time = value; break;
+                }
+                calculated[index] = true;
+                ++known_parameters;
+            }
+        }
+
+        if (known_parameters == NUMBER_OF_PARAMETRS) return true;
+        if (known_parameters == temp_known_parameters) return false; // dead end
+    }
+
+    return true;
 }
 
 size_t BalisticSolver::number_of_initialised_parametrs(const Parametrs& input)const noexcept 
@@ -85,48 +183,60 @@ size_t BalisticSolver::number_of_initialised_parametrs(const Parametrs& input)co
 
 ///////////////////////////////////////////////////////////////////////
 
-double BalisticSolver::find_start_velocity()         const noexcept
+double BalisticSolver::find_start_velocity() const noexcept
 {
-
     if (!Parametrs::is_initialised(p.ALPHA)) return UNITIALISED_VARIABLE;
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
 
-    if (Parametrs::is_initialised(p.H)) {
+    // 1. Ñ‡ÐµÑ€ÐµÐ· Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð¸ Ð²Ñ€ÐµÐ¼Ñ 
+    if (Parametrs::is_initialised(p.L) && Parametrs::is_initialised(p.T_t)) {
+        double theta = deg2rad(p.ALPHA);
+        double cos_theta = std::cos(theta);
+        if (cos_theta == 0) return UNITIALISED_VARIABLE;
+
+        // v_x = L / T, Ð³Ð´Ðµ v_x = v0 * cos(theta)
+        double v0 = p.L / (p.T_t * cos_theta);
+        if (v0 > 0 && std::isfinite(v0)) return v0;
+    }
+
+    // 2. Ð§ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ 
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.A_0)) {
         double theta = deg2rad(p.ALPHA);
         double sin_theta = std::sin(theta);
         if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
-        double v0 = std::sqrt(2 * p.A_0 * p.H) / sin_theta;
+        // V_yÂ² = 2 * a * h, Ð³Ð´Ðµ v_y = v0 * sin(theta)
+        double v0 = std::sqrt(2 * std::abs(p.A_0) * p.H) / sin_theta;
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
-    // Ðåøåíèå ÷åðåç äàëüíîñòü ïîëåòà
-    if (Parametrs::is_initialised(p.L)) {
+    // 3. Ð§ÐµÑ€ÐµÐ· Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð¿Ð¾Ð»ÐµÑ‚Ð° 
+    if (Parametrs::is_initialised(p.L) && Parametrs::is_initialised(p.A_0)) {
         double theta = deg2rad(p.ALPHA);
         double sin_2theta = std::sin(2 * theta);
         if (sin_2theta == 0) return UNITIALISED_VARIABLE;
 
-        double v0 = std::sqrt(p.L * p.A_0 / sin_2theta);
+        // L = (v0Â² * sin(2Î¸)) / |a|  
+        double v0 = std::sqrt(p.L * std::abs(p.A_0) / sin_2theta);
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
-    // Ðåøåíèå ÷åðåç îáùåå âðåìÿ ïîëåòà
-    if (Parametrs::is_initialised(p.T_t)) {
+    // 4. Ð§ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð¾Ð»ÐµÑ‚Ð° Ð¸ ÑƒÑÐºÐ¾Ñ€ÐµÐ½Ð¸Ðµ
+    if (Parametrs::is_initialised(p.T_t) && Parametrs::is_initialised(p.A_0)) {
         double theta = deg2rad(p.ALPHA);
         double sin_theta = std::sin(theta);
         if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
-        double v0 = (p.T_t * p.A_0) / (2 * sin_theta);
+        // T_t = 2 * v0 * sin(theta) / |a|
+        double v0 = (p.T_t * std::abs(p.A_0)) / (2 * sin_theta);
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_start_acceleration()     const noexcept
+double BalisticSolver::find_start_acceleration() const noexcept
 {
-
-    // ×åðåç ñêîðîñòü, óãîë è âûñîòó
+    // 1. Ð§ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ, ÑƒÐ³Ð¾Ð» Ð¸ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ
     if (Parametrs::is_initialised(p.V_0) &&
         Parametrs::is_initialised(p.ALPHA) &&
         Parametrs::is_initialised(p.H))
@@ -135,24 +245,12 @@ double BalisticSolver::find_start_acceleration()     const noexcept
         double sin_theta = std::sin(theta);
         if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
+        // h = (v0Â² * sinÂ²Î¸) / (2 * |a|)
         double a0 = (p.V_0 * p.V_0 * sin_theta * sin_theta) / (2 * p.H);
         if (a0 > 0 && std::isfinite(a0)) return a0;
     }
 
-    // ×åðåç ñêîðîñòü, óãîë è äàëüíîñòü
-    if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.ALPHA) &&
-        Parametrs::is_initialised(p.L))
-    {
-        double theta = deg2rad(p.ALPHA);
-        double sin_2theta = std::sin(2 * theta);
-        if (sin_2theta == 0) return UNITIALISED_VARIABLE;
-
-        double a0 = (p.V_0 * p.V_0 * sin_2theta) / p.L;
-        if (a0 > 0 && std::isfinite(a0)) return a0;
-    }
-
-    // ×åðåç ñêîðîñòü, óãîë è âðåìÿ
+    // 2. Ð§ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ, ÑƒÐ³Ð¾Ð» Ð¸ Ð²Ñ€ÐµÐ¼Ñ
     if (Parametrs::is_initialised(p.V_0) &&
         Parametrs::is_initialised(p.ALPHA) &&
         Parametrs::is_initialised(p.T_t))
@@ -161,6 +259,7 @@ double BalisticSolver::find_start_acceleration()     const noexcept
         double sin_theta = std::sin(theta);
         if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
+        // T_t = 2 * v0 * sin(theta) / |a|
         double a0 = (2 * p.V_0 * sin_theta) / p.T_t;
         if (a0 > 0 && std::isfinite(a0)) return a0;
     }
@@ -169,185 +268,232 @@ double BalisticSolver::find_start_acceleration()     const noexcept
 }
 
 double BalisticSolver::find_throwing_angle_degrees() const noexcept
-
 {
-    if (!Parametrs::is_initialised(p.V_0) || p.V_0 <= 0)
-        return UNITIALISED_VARIABLE;
-    if (!Parametrs::is_initialised(p.A_0))
-        return UNITIALISED_VARIABLE;
 
-    // Ðåøåíèå ÷åðåç ìàêñèìàëüíóþ âûñîòó
-    if (Parametrs::is_initialised(p.H)) {
-        double sin_theta = std::sqrt(2 * p.A_0 * p.H) / p.V_0;
+    // 1. Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ 
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.A_0)) {
+        // h = (v0Â² * sinÂ²Î¸) / (2 * |a|)
+        double sin_theta = std::sqrt(2 * std::abs(p.A_0) * p.H) / p.V_0;
         if (sin_theta > 1.0 || sin_theta < 0) return UNITIALISED_VARIABLE;
 
         double angle = rad2deg(std::asin(sin_theta));
         if (angle >= 0 && angle <= 90) return angle;
     }
 
-    // Ðåøåíèå ÷åðåç äàëüíîñòü ïîëåòà
-    if (Parametrs::is_initialised(p.L)) {
-        double sin_2theta = (p.L * p.A_0) / (p.V_0 * p.V_0);
+    // 2. Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð¿Ð¾Ð»ÐµÑ‚Ð° 
+    if (Parametrs::is_initialised(p.L) && Parametrs::is_initialised(p.A_0)) {
+        // L = (v0Â² * sin(2Î¸)) / |a|
+        double sin_2theta = (p.L * std::abs(p.A_0)) / (p.V_0 * p.V_0);
         if (sin_2theta > 1.0 || sin_2theta < 0) return UNITIALISED_VARIABLE;
 
         double angle = rad2deg(std::asin(sin_2theta) / 2.0);
         if (angle >= 0 && angle <= 90) return angle;
     }
 
-    // Ðåøåíèå ÷åðåç îáùåå âðåìÿ ïîëåòà
-    if (Parametrs::is_initialised(p.T_t)) {
-        double sin_theta = (p.T_t * p.A_0) / (2 * p.V_0);
+    // 3. Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð¾Ð»ÐµÑ‚Ð° 
+    if (Parametrs::is_initialised(p.T_t) && Parametrs::is_initialised(p.A_0)) {
+        // T_t = 2 * v0 * sin(theta) / |a|
+        double sin_theta = (p.T_t * std::abs(p.A_0)) / (2 * p.V_0);
         if (sin_theta > 1.0 || sin_theta < 0) return UNITIALISED_VARIABLE;
 
         double angle = rad2deg(std::asin(sin_theta));
         if (angle >= 0 && angle <= 90) return angle;
     }
 
+    //  4. Ñ‡ÐµÑ€ÐµÐ· ÑÐ¾Ð¾Ñ‚Ð½Ð¾ÑˆÐµÐ½Ð¸Ðµ Ð²Ñ‹ÑÐ¾Ñ‚Ñ‹ Ð¸ Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚Ð¸ 
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.L)) {
+        // Ð˜Ð· ÑÐ¾Ð¾Ñ‚Ð½Ð¾ÑˆÐµÐ½Ð¸Ñ: H/L = (tanÎ¸)/4
+        double tan_theta = (4 * p.H) / p.L;
+        if (tan_theta > 0 && std::isfinite(tan_theta)) {
+            double angle = rad2deg(std::atan(tan_theta));
+            if (angle >= 0 && angle <= 90) return angle;
+        }
+    }
+
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_max_height()             const noexcept
-
+double BalisticSolver::find_max_height() const noexcept
 {
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
-
-    // Îñíîâíàÿ ôîðìóëà ÷åðåç ñêîðîñòü è óãîë
+    // 1.ÐžÑÐ½Ð¾Ð²Ð½Ð°Ñ Ñ„Ð¾Ñ€Ð¼ÑƒÐ»Ð° Ñ‡ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ ÑƒÐ³Ð¾Ð» (Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ ÑƒÑÐºÐ¾Ñ€ÐµÐ½Ð¸Ðµ)
     if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.ALPHA))
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.A_0))
     {
         double theta = deg2rad(p.ALPHA);
-        double h = (p.V_0 * p.V_0 * std::sin(theta) * std::sin(theta)) / (2 * p.A_0);
+        // h = (v0Â² * sinÂ²Î¸) / (2 * |a|)
+        double h = (p.V_0 * p.V_0 * std::sin(theta) * std::sin(theta)) / (2 * std::abs(p.A_0));
         if (h >= 0 && std::isfinite(h)) return h;
     }
 
-    // Ðåøåíèå ÷åðåç äàëüíîñòü ïîëåòà è óãîë
+    // 2.Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð¿Ð¾Ð»ÐµÑ‚Ð° Ð¸ ÑƒÐ³Ð¾Ð» 
     if (Parametrs::is_initialised(p.L) &&
         Parametrs::is_initialised(p.ALPHA))
     {
         double theta = deg2rad(p.ALPHA);
+        // h = (L * tanÎ¸) / 4
         double h = (p.L * std::tan(theta)) / 4.0;
         if (h >= 0 && std::isfinite(h)) return h;
     }
 
-    // Ðåøåíèå ÷åðåç îáùåå âðåìÿ ïîëåòà
-    if (Parametrs::is_initialised(p.T_t)) {
-        double h = (p.A_0 * p.T_t * p.T_t) / 8.0;
+    // 3.Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð¾Ð»ÐµÑ‚Ð° (Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ ÑƒÑÐºÐ¾Ñ€ÐµÐ½Ð¸Ðµ)
+    if (Parametrs::is_initialised(p.T_t) && Parametrs::is_initialised(p.A_0)) {
+        // h = (a * T_tÂ²) / 8
+        double h = (std::abs(p.A_0) * p.T_t * p.T_t) / 8.0;
         if (h >= 0 && std::isfinite(h)) return h;
     }
 
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_max_distance()           const noexcept
-
+double BalisticSolver::find_max_distance() const noexcept
 {
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
-
-
-    // Îñíîâíàÿ ôîðìóëà ÷åðåç ñêîðîñòü è óãîë
+    // 1. Ñ‡ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ Ð²Ñ€ÐµÐ¼Ñ 
     if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.ALPHA))
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.T_t))
     {
         double theta = deg2rad(p.ALPHA);
-        double l = (p.V_0 * p.V_0 * std::sin(2 * theta)) / p.A_0;
+        // L = v0 * cosÎ¸ * T
+        double l = p.V_0 * std::cos(theta) * p.T_t;
+        if (l >= 0 && std::isfinite(l)) return l;
+    }
+    // 2. Ñ„Ð¾Ñ€Ð¼ÑƒÐ»Ð° Ñ‡ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ ÑƒÐ³Ð¾Ð» 
+    if (Parametrs::is_initialised(p.V_0) &&
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.A_0))
+    {
+        double theta = deg2rad(p.ALPHA);
+        // L = (v0Â² * sin(2Î¸)) / |a|
+        double l = (p.V_0 * p.V_0 * std::sin(2 * theta)) / std::abs(p.A_0);
         if (l >= 0 && std::isfinite(l)) return l;
     }
 
-    // Ðåøåíèå ÷åðåç ìàêñèìàëüíóþ âûñîòó è óãîë
+    // 3.Ð ÐµÑˆÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ Ð¸ ÑƒÐ³Ð¾Ð» (ÐÐ• Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ ÑƒÑÐºÐ¾Ñ€ÐµÐ½Ð¸Ðµ!)
     if (Parametrs::is_initialised(p.H) &&
         Parametrs::is_initialised(p.ALPHA))
     {
         double theta = deg2rad(p.ALPHA);
+        // L = (4 * h) / tanÎ¸
         double l = (4 * p.H) / std::tan(theta);
         if (l >= 0 && std::isfinite(l)) return l;
     }
 
+
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_total_time()             const noexcept
-
+double BalisticSolver::find_total_time() const noexcept
 {
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
-
-   
-    // Îñíîâíàÿ ôîðìóëà ÷åðåç ñêîðîñòü è óãîë
+    // 1. ÐžÑÐ½Ð¾Ð²Ð½Ð°Ñ Ñ„Ð¾Ñ€Ð¼ÑƒÐ»Ð° Ñ‡ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ ÑƒÐ³Ð¾Ð»
     if (Parametrs::is_initialised(p.V_0) &&
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.A_0))
+    {
+        double theta = deg2rad(p.ALPHA);
+        // T_t = 2 * vâ‚€ * sinÎ¸ / |a|
+        double t = (2 * p.V_0 * std::sin(theta)) / std::abs(p.A_0);
+        if (t >= 0 && std::isfinite(t)) return t;
+    }
+
+    // 2. Ð§ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.A_0)) {
+        // T_t = 2 * âˆš(2h / |a|)
+        double t = 2 * std::sqrt(2 * p.H / std::abs(p.A_0));
+        if (t >= 0 && std::isfinite(t)) return t;
+    }
+
+    // 3. Ð§ÐµÑ€ÐµÐ· Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð¾Ð´ÑŠÐµÐ¼Ð° Ð¸Ð»Ð¸ Ð¿Ð°Ð´ÐµÐ½Ð¸Ñ
+    if (Parametrs::is_initialised(p.T_r)) {
+        // T_t = 2 * T_r
+        return 2 * p.T_r;
+    }
+    if (Parametrs::is_initialised(p.T_f)) {
+        // T_t = 2 * T_f
+        return 2 * p.T_f;
+    }
+
+    // 4. Ð§ÐµÑ€ÐµÐ· Ð´Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð¸ Ð³Ð¾Ñ€Ð¸Ð·Ð¾Ð½Ñ‚Ð°Ð»ÑŒÐ½ÑƒÑŽ ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ
+    if (Parametrs::is_initialised(p.L) &&
+        Parametrs::is_initialised(p.V_0) &&
         Parametrs::is_initialised(p.ALPHA))
     {
         double theta = deg2rad(p.ALPHA);
-        double t = (2 * p.V_0 * std::sin(theta)) / p.A_0;
-        if (t >= 0 && std::isfinite(t)) return t;
+        double cos_theta = std::cos(theta);
+        if (cos_theta != 0) {
+            // T_t = L / (vâ‚€ * cosÎ¸)
+            double t = p.L / (p.V_0 * cos_theta);
+            if (t >= 0 && std::isfinite(t)) return t;
+        }
     }
-
-    // Ðåøåíèå ÷åðåç ìàêñèìàëüíóþ âûñîòó
-    if (Parametrs::is_initialised(p.H)) {
-        double t = 2 * std::sqrt(2 * p.H / p.A_0);
-        if (t >= 0 && std::isfinite(t)) return t;
-    }
-
 
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_faling_time()            const noexcept
-
+double BalisticSolver::find_faling_time() const noexcept
 {
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
-
-    // Âðåìÿ ïàäåíèÿ = âðåìÿ ïîäúåìà (â âàêóóìå)
+    // 1. Ð§ÐµÑ€ÐµÐ· Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð¾Ð´ÑŠÐµÐ¼Ð° (ÑÐ¸Ð¼Ð¼ÐµÑ‚Ñ€Ð¸Ñ)
     if (Parametrs::is_initialised(p.T_r)) {
         return p.T_r;
     }
 
-    // ×åðåç îáùåå âðåìÿ
+    // 2. Ð§ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ
     if (Parametrs::is_initialised(p.T_t)) {
+        // T_f = T_t / 2
         double tf = p.T_t / 2.0;
         if (tf >= 0 && std::isfinite(tf)) return tf;
     }
 
-    // ×åðåç ñêîðîñòü è óãîë
+    // 3. Ð§ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ ÑƒÐ³Ð¾Ð»
     if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.ALPHA))
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.A_0))
     {
         double theta = deg2rad(p.ALPHA);
-        double tf = (p.V_0 * std::sin(theta)) / p.A_0;
+        // T_f = vâ‚€ * sinÎ¸ / |a|
+        double tf = (p.V_0 * std::sin(theta)) / std::abs(p.A_0);
         if (tf >= 0 && std::isfinite(tf)) return tf;
     }
 
-    // ×åðåç ìàêñèìàëüíóþ âûñîòó
-    if (Parametrs::is_initialised(p.H)) {
-        double tf = std::sqrt(2 * p.H / p.A_0);
+    // 4. Ð§ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.A_0)) {
+        // T_f = âˆš(2h / |a|)
+        double tf = std::sqrt(2 * p.H / std::abs(p.A_0));
         if (tf >= 0 && std::isfinite(tf)) return tf;
     }
 
     return UNITIALISED_VARIABLE;
 }
 
-double BalisticSolver::find_rising_time()            const noexcept
-
+double BalisticSolver::find_rising_time() const noexcept
 {
-    if (!Parametrs::is_initialised(p.A_0)) return UNITIALISED_VARIABLE;
+    // 1. Ð§ÐµÑ€ÐµÐ· Ð²Ñ€ÐµÐ¼Ñ Ð¿Ð°Ð´ÐµÐ½Ð¸Ñ (ÑÐ¸Ð¼Ð¼ÐµÑ‚Ñ€Ð¸Ñ)
+    if (Parametrs::is_initialised(p.T_f)) {
+        return p.T_f;
+    }
 
-
-    // Âðåìÿ ïîäúåìà = ïîëîâèíà îáùåãî âðåìåíè
+    // 2. Ð§ÐµÑ€ÐµÐ· Ð¾Ð±Ñ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ
     if (Parametrs::is_initialised(p.T_t)) {
+        // T_r = T_t / 2
         double tr = p.T_t / 2.0;
         if (tr >= 0 && std::isfinite(tr)) return tr;
     }
 
-    // ×åðåç ñêîðîñòü è óãîë
+    // 3. Ð§ÐµÑ€ÐµÐ· ÑÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¸ ÑƒÐ³Ð¾Ð»
     if (Parametrs::is_initialised(p.V_0) &&
-        Parametrs::is_initialised(p.ALPHA))
+        Parametrs::is_initialised(p.ALPHA) &&
+        Parametrs::is_initialised(p.A_0))
     {
         double theta = deg2rad(p.ALPHA);
-        double tr = (p.V_0 * std::sin(theta)) / p.A_0;
+        // T_r = vâ‚€ * sinÎ¸ / |a|
+        double tr = (p.V_0 * std::sin(theta)) / std::abs(p.A_0);
         if (tr >= 0 && std::isfinite(tr)) return tr;
     }
 
-    // ×åðåç ìàêñèìàëüíóþ âûñîòó
-    if (Parametrs::is_initialised(p.H)) {
-        double tr = std::sqrt(2 * p.H / p.A_0);
+    // 4. Ð§ÐµÑ€ÐµÐ· Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½ÑƒÑŽ Ð²Ñ‹ÑÐ¾Ñ‚Ñƒ
+    if (Parametrs::is_initialised(p.H) && Parametrs::is_initialised(p.A_0)) {
+        // T_r = âˆš(2h / |a|)
+        double tr = std::sqrt(2 * p.H / std::abs(p.A_0));
         if (tr >= 0 && std::isfinite(tr)) return tr;
     }
 
