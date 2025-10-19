@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>C:\Users\makno\source\repos\Ballistic_Calculation\Ballistic_Calculation\TestsAndBenchmarks;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -126,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BalisticParametrs\BalisticSolver.cpp" />
+    <ClCompile Include="TestsAndBenchmarks\BalisticSolverTester.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Projections\MathVector.cpp" />
     <ClCompile Include="BalisticParametrs\Parametrs.cpp" />
@@ -133,7 +137,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BalisticParametrs\BalisticSolver.h" />
-    <ClInclude Include="Benchmark.h" />
+    <ClInclude Include="TestsAndBenchmarks\BalisticSolverTester.h" />
+    <ClInclude Include="TestsAndBenchmarks\Benchmark.h" />
     <ClInclude Include="Projections\MathVector.h" />
     <ClInclude Include="BalisticParametrs\Parametrs.h" />
     <ClInclude Include="Projections\Projector.h" />

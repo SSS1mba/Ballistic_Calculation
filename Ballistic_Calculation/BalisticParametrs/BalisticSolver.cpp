@@ -163,6 +163,8 @@ bool BalisticSolver::solve_parallel(const Parametrs& input, Parametrs* result) c
     return true;
 }
 
+
+
 size_t BalisticSolver::number_of_initialised_parametrs(const Parametrs& input)const noexcept 
 {
 	size_t result = 0;

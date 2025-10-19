@@ -30,6 +30,9 @@
     <ClCompile Include="Projections\Projector.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="TestsAndBenchmarks\BalisticSolverTester.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Projections\MathVector.h">
@@ -44,7 +47,10 @@
     <ClInclude Include="Projections\Projector.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Benchmark.h">
+    <ClInclude Include="TestsAndBenchmarks\Benchmark.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="TestsAndBenchmarks\BalisticSolverTester.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
