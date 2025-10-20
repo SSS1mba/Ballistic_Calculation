@@ -26,42 +26,51 @@ void BalisticTester::initialize_test_cases() {
     test_cases = {
         {
             "Full parameters set",
+            create_params(25.0, 9.81, 45.0, 31.86, 63.77, 3.61, 1.80, 1.80),
             create_params(25.0, 9.81, 45.0, 31.86, 63.77, 3.61, 1.80, 1.80)
         },
         {
             "From velocity and angle",
             create_params(25.0, 9.81, 45.0, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
-                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(25.0, 9.81, 45.0, 15.94, 63.77, 3.61, 1.80, 1.80)
         },
         {
             "From height and distance",
             create_params(UNITIALISED_VARIABLE, 9.81, UNITIALISED_VARIABLE, 31.86, 63.77,
-                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(25.0, 9.81, 45.0, 31.86, 63.77, 3.61, 1.80, 1.80)
         },
         {
             "From time and angle",
             create_params(UNITIALISED_VARIABLE, 9.81, 45.0, UNITIALISED_VARIABLE,
-                         UNITIALISED_VARIABLE, 3.61, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, 3.61, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(25.0, 9.81, 45.0, 15.94, 63.77, 3.61, 1.80, 1.80)
         },
         {
             "Not enough data",
+            create_params(UNITIALISED_VARIABLE, 9.81, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
             create_params(UNITIALISED_VARIABLE, 9.81, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
                          UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
         },
         {
             "Vertical throw",
             create_params(20.0, 9.81, 90.0, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
-                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(20.0, 9.81, 90.0, 20.39, 0.0, 4.08, 2.04, 2.04)
         },
         {
             "Horizontal throw",
             create_params(15.0, 9.81, 0.0, 10.0, UNITIALISED_VARIABLE,
-                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(15.0, 9.81, 0.0, 10.0, 21.43, 1.43, 1.43, 1.43)
         },
         {
             "Moon acceleration",
             create_params(10.0, 1.62, 30.0, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
-                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE)
+                         UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
+            create_params(10.0, 1.62, 30.0, 1.27, 44.19, 6.17, 3.09, 3.09)
         }
     };
 }
@@ -89,7 +98,14 @@ void BalisticTester::run_sequential_tests() {
 
         bool success = solver.solve(test_case.input, &result);
 
-        std::cout << (success ? " SUCCESS" : " FAILED") << "\n";
+        if (success) {
+            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
+        }
+        else {
+            std::cout << " FAILED - no solution";
+        }
+        std::cout << "\n";
     }
 }
 
@@ -102,7 +118,14 @@ void BalisticTester::run_parallel_tests() {
 
         bool success = solver.solve_parallel(test_case.input, &result);
 
-        std::cout << (success ? " SUCCESS" : " FAILED") << "\n";
+        if (success) {
+            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
+        }
+        else {
+            std::cout << " FAILED - no solution";
+        }
+        std::cout << "\n";
     }
 }
 
@@ -115,6 +138,46 @@ void BalisticTester::run_parallel_smart_tests() {
 
         bool success = solver.solve_parallel_smart(test_case.input, &result);
 
-        std::cout << (success ? " SUCCESS" : " FAILED") << "\n";
+        if (success) {
+            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
+        }
+        else {
+            std::cout << " FAILED - no solution";
+        }
+        std::cout << "\n";
     }
+}
+
+bool BalisticTester::compare_with_expected(const Parametrs& result, const Parametrs& expected, const std::string& test_name) {
+    const double tolerance = 1e-2; // 1% tolerance 
+
+    auto check_param = [&](double result_val, double expected_val, const std::string& param_name) -> bool {
+        if (Parametrs::is_initialised(expected_val)) {
+            if (!Parametrs::is_initialised(result_val)) {
+                return false; 
+            }
+            if (!is_close(result_val, expected_val, tolerance)) {
+                return false; 
+            }
+        }
+        return true;
+        };
+
+    return check_param(result.start_velocity, expected.start_velocity, "V0") &&
+        check_param(result.start_acceleration, expected.start_acceleration, "A0") &&
+        check_param(result.throwing_angle_degrees, expected.throwing_angle_degrees, "Alpha") &&
+        check_param(result.max_height, expected.max_height, "H") &&
+        check_param(result.max_distance, expected.max_distance, "L") &&
+        check_param(result.total_time, expected.total_time, "Tt") &&
+        check_param(result.faling_time, expected.faling_time, "Tf") &&
+        check_param(result.rising_time, expected.rising_time, "Tr");
+}
+
+bool BalisticTester::is_close(double a, double b, double tolerance) {
+    if (a == b) return true;
+    if (std::abs(a - b) < 1e-10) return true; 
+
+    double relative_error = std::abs(a - b) / std::max(std::abs(a), std::abs(b));
+    return relative_error <= tolerance;
 }

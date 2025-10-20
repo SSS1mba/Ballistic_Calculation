@@ -180,6 +180,7 @@ bool BalisticSolver::solve_parallel_smart(const Parametrs& input, Parametrs* res
 
         if (known_parameters == NUMBER_OF_PARAMETRS) return true;
         if (known_parameters == temp_known_parameters) return false;
+
     }
 
     return true;
