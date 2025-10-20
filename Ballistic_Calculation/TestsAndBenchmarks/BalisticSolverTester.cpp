@@ -9,15 +9,15 @@ void BalisticTester::run_all_tests() {
 
     std::cout << "SEQUENTIAL VERSION:\n";
     std::cout << "===================\n";
-    benchmark([this]() { run_sequential_tests(); });
+     run_sequential_tests();;
 
     std::cout << "\nPARALLEL VERSION:\n";
     std::cout << "================\n";
-    benchmark([this]() { run_parallel_tests(); });
+    run_parallel_tests();
 
     std::cout << "\nPARALLEL SMART VERSION:\n";
     std::cout << "================\n";
-    benchmark([this]() { run_parallel_smart_tests(); });
+    run_parallel_smart_tests();
 
     std::cout << "\n=== TESTING COMPLETED ===\n";
 }
@@ -90,14 +90,16 @@ Parametrs BalisticTester::create_params(double v0, double a0, double alpha, doub
 }
 
 void BalisticTester::run_sequential_tests() {
+    auto total_duration = std::chrono::steady_clock::duration::zero();
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
         BalisticSolver solver(test_case.input);
         Parametrs result;
 
+        auto start = Clock::now();
         bool success = solver.solve(test_case.input, &result);
-
+        total_duration += Clock::now() - start;
         if (success) {
             bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
             std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
@@ -107,17 +109,20 @@ void BalisticTester::run_sequential_tests() {
         }
         std::cout << "\n";
     }
+    prettyPrintDuration(total_duration);
 }
 
 void BalisticTester::run_parallel_tests() {
+    auto total_duration = std::chrono::steady_clock::duration::zero();
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
         BalisticSolver solver(test_case.input);
         Parametrs result;
 
+        auto start = Clock::now();
         bool success = solver.solve_parallel(test_case.input, &result);
-
+        total_duration += Clock::now() - start;
         if (success) {
             bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
             std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
@@ -127,16 +132,20 @@ void BalisticTester::run_parallel_tests() {
         }
         std::cout << "\n";
     }
+    prettyPrintDuration(total_duration);
 }
 
 void BalisticTester::run_parallel_smart_tests() {
+    auto total_duration = std::chrono::steady_clock::duration::zero();
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
         BalisticSolver solver(test_case.input);
         Parametrs result;
 
+        auto start = Clock::now();
         bool success = solver.solve_parallel_smart(test_case.input, &result);
+        total_duration += Clock::now() - start;
 
         if (success) {
             bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
@@ -147,6 +156,7 @@ void BalisticTester::run_parallel_smart_tests() {
         }
         std::cout << "\n";
     }
+    prettyPrintDuration(total_duration);
 }
 
 bool BalisticTester::compare_with_expected(const Parametrs& result, const Parametrs& expected, const std::string& test_name) {
