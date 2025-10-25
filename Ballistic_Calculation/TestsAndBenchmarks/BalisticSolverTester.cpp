@@ -62,15 +62,15 @@ void BalisticTester::initialize_test_cases() {
         },
         {
             "Horizontal throw",
-            create_params(15.0, 9.81, 0.0, 10.0, UNITIALISED_VARIABLE,
+            create_params(15.0, UNITIALISED_VARIABLE, 0.0, UNITIALISED_VARIABLE, 21.43,
                          UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
-            create_params(15.0, 9.81, 0.0, 10.0, 21.43, 1.43, 1.43, 1.43)
+            create_params(15.0, 0, 0, 0, 21.43, 1.43, 1.43, 1.43)
         },
         {
             "Moon acceleration",
             create_params(10.0, 1.62, 30.0, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE,
                          UNITIALISED_VARIABLE, UNITIALISED_VARIABLE, UNITIALISED_VARIABLE),
-            create_params(10.0, 1.62, 30.0, 1.27, 44.19, 6.17, 3.09, 3.09)
+            create_params(10.0, 1.62, 30.0, 7.72, 53.73, 6.17, 3.09, 3.09)
         }
     };
 }
