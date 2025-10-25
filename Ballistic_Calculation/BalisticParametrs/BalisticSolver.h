@@ -12,7 +12,7 @@ constexpr size_t RECOMENDED_TREADS_FOR_PARALLEL = 2;
 class BalisticSolver
 {
 public:
-	BalisticSolver(const Parametrs& parametrs_to_solve);
+	BalisticSolver();
 	 bool solve(const Parametrs& input, Parametrs* result) ;            //solves "input" and write results of calculations in "results"
 																	         //throws std::invalid argument 
 

@@ -94,7 +94,7 @@ void BalisticTester::run_sequential_tests() {
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
-        BalisticSolver solver(test_case.input);
+        BalisticSolver solver;
         Parametrs result;
 
         auto start = Clock::now();
@@ -117,7 +117,7 @@ void BalisticTester::run_parallel_tests() {
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
-        BalisticSolver solver(test_case.input);
+        BalisticSolver solver;
         Parametrs result;
 
         auto start = Clock::now();
@@ -140,7 +140,7 @@ void BalisticTester::run_parallel_smart_tests() {
     for (const auto& test_case : test_cases) {
         std::cout << "Test: " << std::setw(25) << std::left << test_case.name;
 
-        BalisticSolver solver(test_case.input);
+        BalisticSolver solver;
         Parametrs result;
 
         auto start = Clock::now();
