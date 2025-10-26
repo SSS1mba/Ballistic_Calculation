@@ -62,9 +62,11 @@ int main() {
 
 ## Структура проекта
 
+```
 BallisticsCalculator/
 ├── BallisticSolver.h/cpp    # Основной решатель баллистических задач
 ├── Parametrs.h/cpp          # Структура параметров и данных
 ├── BalisticTester.h/cpp     # Система тестирования и верификации
 ├── main.cpp                 # Точка входа в программу
 └── BallisticsCalculator.sln # Файл решения Visual Studio
+```
