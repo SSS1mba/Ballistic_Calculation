@@ -57,6 +57,23 @@ int main() {
 - Нажмите `Build` → `Build Solution` (Ctrl+Shift+B)
 - Или используйте F7
 
+### Если не собралось:
+1)ПКМ на проект "Ballistic_Calculation" в "Обозревателе решений"
+2)Свойства
+3)В меню "свойста конфигурации" - подпункт "каталоги VC++"
+4)"Включаемые каталоги" -> "изменить"
+<img width="794" height="535" alt="image" src="https://github.com/user-attachments/assets/6a4892e5-e2cd-4139-b378-84a9f4d44a6d" />
+
+5)Добавить папки проекта (создать строку -> ... -> выбрать в проводнике папку):
+<img width="1271" height="540" alt="image" src="https://github.com/user-attachments/assets/97ba08cf-88a2-4c2c-ac9b-4d717d2cf05b" />
+<img width="520" height="343" alt="image" src="https://github.com/user-attachments/assets/8508ddf4-91cd-4da2-b04c-81f241c848ca" />
+<img width="470" height="347" alt="image" src="https://github.com/user-attachments/assets/3a17e622-69c1-42cd-a4bc-a43a5a5a8ed3" />
+подключить все 3 папки (и добавлять другие папки с кодом при их создании вами)
+<img width="612" height="109" alt="image" src="https://github.com/user-attachments/assets/4da32af8-8db5-4bed-9780-083fa8288987" />
+
+
+
+
 ### Запустите программу:
 - Нажмите `Debug` → `Start Without Debugging` (Ctrl+F5)
 
