@@ -10,7 +10,8 @@ int main()
     BalisticTester bt;
     bt.run_all_tests();
 
-    return 0;
+    
+    system("pause");
 }
 
 
