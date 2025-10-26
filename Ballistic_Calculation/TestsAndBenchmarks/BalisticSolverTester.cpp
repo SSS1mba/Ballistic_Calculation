@@ -101,7 +101,7 @@ void BalisticTester::run_sequential_tests() {
         bool success = solver.solve(test_case.input, &result);
         total_duration += Clock::now() - start;
         if (success) {
-            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            bool matches_expected = compare_with_expected(result, test_case.expected);
             std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
         }
         else {
@@ -124,7 +124,7 @@ void BalisticTester::run_parallel_tests() {
         bool success = solver.solve_parallel(test_case.input, &result);
         total_duration += Clock::now() - start;
         if (success) {
-            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            bool matches_expected = compare_with_expected(result, test_case.expected);
             std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
         }
         else {
@@ -148,7 +148,7 @@ void BalisticTester::run_parallel_smart_tests() {
         total_duration += Clock::now() - start;
 
         if (success) {
-            bool matches_expected = compare_with_expected(result, test_case.expected, test_case.name);
+            bool matches_expected = compare_with_expected(result, test_case.expected);
             std::cout << (matches_expected ? " SUCCESS" : " FAILED - wrong values");
         }
         else {
@@ -159,10 +159,10 @@ void BalisticTester::run_parallel_smart_tests() {
     prettyPrintDuration(total_duration);
 }
 
-bool BalisticTester::compare_with_expected(const Parametrs& result, const Parametrs& expected, const std::string& test_name) {
+bool BalisticTester::compare_with_expected(const Parametrs& result, const Parametrs& expected) {
     const double tolerance = 1e-2; // 1% tolerance 
 
-    auto check_param = [&](double result_val, double expected_val, const std::string& param_name) -> bool {
+    auto check_param = [&](double result_val, double expected_val) -> bool {
         if (Parametrs::is_initialised(expected_val)) {
             if (!Parametrs::is_initialised(result_val)) {
                 return false; 
@@ -174,14 +174,14 @@ bool BalisticTester::compare_with_expected(const Parametrs& result, const Parame
         return true;
         };
 
-    return check_param(result.start_velocity, expected.start_velocity, "V0") &&
-        check_param(result.start_acceleration, expected.start_acceleration, "A0") &&
-        check_param(result.throwing_angle_degrees, expected.throwing_angle_degrees, "Alpha") &&
-        check_param(result.max_height, expected.max_height, "H") &&
-        check_param(result.max_distance, expected.max_distance, "L") &&
-        check_param(result.total_time, expected.total_time, "Tt") &&
-        check_param(result.faling_time, expected.faling_time, "Tf") &&
-        check_param(result.rising_time, expected.rising_time, "Tr");
+    return check_param(result.start_velocity, expected.start_velocity)              &&
+        check_param(result.start_acceleration, expected.start_acceleration)         &&
+        check_param(result.throwing_angle_degrees, expected.throwing_angle_degrees) &&
+        check_param(result.max_height, expected.max_height )                        &&
+        check_param(result.max_distance, expected.max_distance )                    &&
+        check_param(result.total_time, expected.total_time)                         &&
+        check_param(result.faling_time, expected.faling_time)                       &&
+        check_param(result.rising_time, expected.rising_time);
 }
 
 bool BalisticTester::is_close(double a, double b, double tolerance) {

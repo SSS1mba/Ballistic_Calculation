@@ -222,14 +222,14 @@ double BalisticSolver::calculate_parameter(size_t index, const Parametrs& params
 
 void BalisticSolver::set_parameter(Parametrs& params, size_t index, double value) const {
     switch (index) {
-    case index_V_0:   params.start_velocity = value; break;
-    case index_A_0:   params.start_acceleration = value; break;
+    case index_V_0:   params.start_velocity = value;         break;
+    case index_A_0:   params.start_acceleration = value;     break;
     case index_ALPHA: params.throwing_angle_degrees = value; break;
-    case index_H:     params.max_height = value; break;
-    case index_L:     params.max_distance = value; break;
-    case index_T_t:   params.total_time = value; break;
-    case index_T_f:   params.faling_time = value; break;
-    case index_T_r:   params.rising_time = value; break;
+    case index_H:     params.max_height = value;             break;
+    case index_L:     params.max_distance = value;           break;
+    case index_T_t:   params.total_time = value;             break;
+    case index_T_f:   params.faling_time = value;            break;
+    case index_T_r:   params.rising_time = value;            break;
     }
 }
 
@@ -239,29 +239,52 @@ void BalisticSolver::set_parameter(Parametrs& params, size_t index, double value
 double BalisticSolver::find_start_velocity(const Parametrs& params) const noexcept
 {
     if (!Parametrs::is_initialised(params.ALPHA)) return UNITIALISED_VARIABLE;
+    if (params.ALPHA == 0)  // Горизонтальный бросок
+    {
+        if (!(Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.T_t))) return UNITIALISED_VARIABLE;
+        double v0 =  params.M_L / params.T_t;
+        if (v0 > 0 && std::isfinite(v0)) return v0;
+    }
+    if (params.ALPHA == 90) // Вертикальный бросок
+    {
+        if (Parametrs::is_initialised(params.A_0) && Parametrs::is_initialised(params.T_r))
+        {
+            double v0 = std::sqrt(params.A_0 * params.T_r);
+            if (v0 > 0 && std::isfinite(v0)) return v0;
+        }
+
+        if (!(Parametrs::is_initialised(params.A_0) && Parametrs::is_initialised(params.M_H))) 
+        {
+            double v0 = std::sqrt(params.A_0 * params.M_H * 2);
+            if (v0 > 0 && std::isfinite(v0)) return v0;
+        }
+
+        return UNITIALISED_VARIABLE;
+    }
 
     // 1. Через дальность и время 
-    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.T_t)) {
+    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.T_t) )
+    {
         double theta = deg2rad(params.ALPHA);
         double cos_theta = std::cos(theta);
-        if (cos_theta == 0) return UNITIALISED_VARIABLE;
 
         double v0 = params.M_L / (params.T_t * cos_theta);
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
     // 2. Через максимальную высоту 
-    if (Parametrs::is_initialised(params.M_H) && Parametrs::is_initialised(params.A_0)) {
+    if (Parametrs::is_initialised(params.M_H) && Parametrs::is_initialised(params.A_0))
+    {
         double theta = deg2rad(params.ALPHA);
         double sin_theta = std::sin(theta);
-        if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
         double v0 = std::sqrt(2 * std::abs(params.A_0) * params.M_H) / sin_theta;
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
     // 3.1 Через дальность полета 
-    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.T_t)) {
+    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.T_t))
+    {
         double theta = deg2rad(params.ALPHA);
         double cos_theta = std::cos(theta);
 
@@ -269,51 +292,48 @@ double BalisticSolver::find_start_velocity(const Parametrs& params) const noexce
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
     // 3.2 Через дальность полета 
-    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.A_0)) {
+    if (Parametrs::is_initialised(params.M_L) && Parametrs::is_initialised(params.A_0)) 
+    {
         double theta = deg2rad(params.ALPHA);
         double sin_2theta = std::sin(2 * theta);
-        if (sin_2theta == 0) return UNITIALISED_VARIABLE;
 
         double v0 = std::sqrt(params.M_L * std::abs(params.A_0) / sin_2theta);
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
     // 4. Через общее время полета и ускорение
-    if (Parametrs::is_initialised(params.T_t) && Parametrs::is_initialised(params.A_0)) {
+    if (Parametrs::is_initialised(params.T_t) && Parametrs::is_initialised(params.A_0)) 
+    {
         double theta = deg2rad(params.ALPHA);
         double sin_theta = std::sin(theta);
-        if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
         double v0 = (params.T_t * std::abs(params.A_0)) / (2 * sin_theta);
         if (v0 > 0 && std::isfinite(v0)) return v0;
     }
 
+    return UNITIALISED_VARIABLE;
 }
 
 double BalisticSolver::find_start_acceleration(const Parametrs& params) const noexcept
 {
     if (params.ALPHA == 0) return 0; //при горизонтальном броске A по оси y = 0
+    if (!(Parametrs::is_initialised(params.V_0) && Parametrs::is_initialised(params.ALPHA))) return UNITIALISED_VARIABLE;
+
     // 1. Через скорость, угол и высоту
-    if (Parametrs::is_initialised(params.V_0) &&
-        Parametrs::is_initialised(params.ALPHA) &&
-        Parametrs::is_initialised(params.M_H))
+    if (Parametrs::is_initialised(params.M_H))
     {
         double theta = deg2rad(params.ALPHA);
         double sin_theta = std::sin(theta);
-        if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
         double a0 = (params.V_0 * params.V_0 * sin_theta * sin_theta) / (2 * params.M_H);
         if (a0 > 0 && std::isfinite(a0)) return a0;
     }
 
     // 2. Через скорость, угол и время
-    if (Parametrs::is_initialised(params.V_0) &&
-        Parametrs::is_initialised(params.ALPHA) &&
-        Parametrs::is_initialised(params.T_t))
+    if ( Parametrs::is_initialised(params.T_t))
     {
         double theta = deg2rad(params.ALPHA);
         double sin_theta = std::sin(theta);
-        if (sin_theta == 0) return UNITIALISED_VARIABLE;
 
         double a0 = (2 * params.V_0 * sin_theta) / params.T_t;
         if (a0 > 0 && std::isfinite(a0)) return a0;
@@ -324,6 +344,8 @@ double BalisticSolver::find_start_acceleration(const Parametrs& params) const no
 
 double BalisticSolver::find_throwing_angle_degrees(const Parametrs& params) const noexcept
 {
+    if (params.A_0 == 0 || params.M_H == 0) return 0;
+    if (params.M_L == 0) return 90;
     if (!Parametrs::is_initialised(params.A_0)) return UNITIALISED_VARIABLE;
 
     // 0. Дальность,общее время,ускорение
@@ -369,17 +391,19 @@ double BalisticSolver::find_throwing_angle_degrees(const Parametrs& params) cons
 double BalisticSolver::find_max_height(const Parametrs& params) const noexcept
 {
     if (params.ALPHA == 0) return 0;
-    if (Parametrs::is_initialised(params.V_0)   &&
+
+    // 1.H = V0*t + a*a * t / 2
+    if (Parametrs::is_initialised(params.T_r)   &&
+        Parametrs::is_initialised(params.V_0)   &&
         Parametrs::is_initialised(params.ALPHA) &&
-        Parametrs::is_initialised(params.A_0)   &&
-        Parametrs::is_initialised(params.T_t))
+        Parametrs::is_initialised(params.A_0)  ) 
     {
         double theta = deg2rad(params.ALPHA);
         double sin_theta = std::sin(theta);
         double h = params.V_0 * params.T_r + params.A_0 * params.T_r * params.T_r / 2;
         if (h >= 0 && std::isfinite(h)) return h;
     }
-    // 1. Основная формула через скорость  угол и ускорение
+    // 2. Основная формула через скорость  угол и ускорение
     if (Parametrs::is_initialised(params.V_0) &&
         Parametrs::is_initialised(params.ALPHA) &&
         Parametrs::is_initialised(params.A_0))
@@ -388,18 +412,6 @@ double BalisticSolver::find_max_height(const Parametrs& params) const noexcept
         double sin_theta = std::sin(theta);
         double h = (params.V_0 * params.V_0 * sin_theta * sin_theta) / (2 * std::abs(params.A_0));
         if (h >= 0 && std::isfinite(h)) return h;
-    }
-
-    // 2. Решение через дальность полета и угол 
-    if (Parametrs::is_initialised(params.M_L) &&
-        Parametrs::is_initialised(params.ALPHA))
-    {
-        double theta = deg2rad(params.ALPHA);
-        double tan_theta = std::tan(theta);
-        if (tan_theta != 0) {
-            double h = (params.M_L * tan_theta) / 4.0;
-            if (h >= 0 && std::isfinite(h)) return h;
-        }
     }
 
     // 3. Решение через общее время полета (требует ускорение)
@@ -413,56 +425,39 @@ double BalisticSolver::find_max_height(const Parametrs& params) const noexcept
     return UNITIALISED_VARIABLE;
 }
 
-
 double BalisticSolver::find_max_distance(const Parametrs& params) const noexcept
 {
     if (params.ALPHA == 90) return 0;
+    if (!(params.is_initialised(params.V_0) && params.is_initialised(params.ALPHA)))
     // 1. через скорость и время 
-    if (Parametrs::is_initialised(params.V_0) &&
-        Parametrs::is_initialised(params.ALPHA) &&
-        Parametrs::is_initialised(params.T_t))
+    if (Parametrs::is_initialised(params.T_t))
     {
         double theta = deg2rad(params.ALPHA);
         double cos_theta = std::cos(theta);
+
         //  L = V₀ * cos(θ) * T
         double l = params.V_0 * cos_theta * params.T_t;
         if (l >= 0 && std::isfinite(l)) return l;
     }
     // 1.2 через скорость и время если бросок горизонтальный
-    if (params.ALPHA == 0                     &&
-        Parametrs::is_initialised(params.V_0) &&
-        Parametrs::is_initialised(params.T_t))
+    if (params.ALPHA == 0 && Parametrs::is_initialised(params.T_t))
     {
-        return params.V_0 * params.T_t;
+        double l = params.V_0 * params.T_t;
+        if (l >= 0 && std::isfinite(l)) return l;
     }
 
     // 2. формула через скорость и угол 
-    if (Parametrs::is_initialised(params.V_0) &&
-        Parametrs::is_initialised(params.ALPHA) &&
-        Parametrs::is_initialised(params.A_0) && params.A_0 != 0)
+    if (Parametrs::is_initialised(params.A_0) && params.A_0 != 0)
     {
         double theta = deg2rad(params.ALPHA);
         double sin_2theta = std::sin(2 * theta);
-        //  L = (V₀² * sin(2θ)) / g
+
+        //  L = (V₀* * sin(2θ)) / g
         if (sin_2theta != 0) {
             double l = (params.V_0 * params.V_0 * sin_2theta) / std::abs(params.A_0);
             if (l >= 0 && std::isfinite(l)) return l;
         }
     }
-
-    //// 3. Решение через максимальную высоту и угол
-    //if (Parametrs::is_initialised(params.M_H) &&
-    //    Parametrs::is_initialised(params.ALPHA))
-    //{
-    //    double theta = deg2rad(params.ALPHA);
-    //    double tan_theta = std::tan(theta);
-    //    //  L = (4 * H) / tan(θ)
-    //    if (tan_theta != 0) {
-    //        double l = (4 * params.M_H) / tan_theta;
-    //        if (l >= 0 && std::isfinite(l)) return l;
-    //    }
-    //}
-
 
     return UNITIALISED_VARIABLE;
 }
@@ -473,15 +468,18 @@ double BalisticSolver::find_total_time(const Parametrs& params) const noexcept
     if (params.ALPHA == 0 && params.is_initialised(params.V_0) 
         && params.is_initialised(params.M_L))
     {
-        return params.M_L / params.V_0;
+        double t = params.M_L / params.V_0;
+        if (t >= 0 && std::isfinite(t)) return t;
     }
 
     // 0. Через время подъема или падения
     if (Parametrs::is_initialised(params.T_r)) {
-        return 2 * params.T_r;
+        double t = 2 * params.T_r;
+        if (t >= 0 && std::isfinite(t)) return t;
     }
     if (Parametrs::is_initialised(params.T_f)) {
-        return 2 * params.T_f;
+        double t = 2 * params.T_f;
+        if (t >= 0 && std::isfinite(t)) return t;
     }
 
     // 1. Через дальность и горизонтальную скорость
@@ -502,7 +500,8 @@ double BalisticSolver::find_total_time(const Parametrs& params) const noexcept
         Parametrs::is_initialised(params.V_0) &&
         params.V_0 != 0 && params.ALPHA == 0  )
     {
-        return params.M_L / params.V_0;
+        double t = params.M_L / params.V_0;
+        if (t >= 0 && std::isfinite(t)) return t;
     }
 
 
@@ -512,7 +511,6 @@ double BalisticSolver::find_total_time(const Parametrs& params) const noexcept
     // 2. Основная формула через скорость и угол
     if (Parametrs::is_initialised(params.V_0)   &&
         Parametrs::is_initialised(params.ALPHA) &&
-        params.ALPHA != 0                       &&
         Parametrs::is_initialised(params.A_0))
     {
         double theta = deg2rad(params.ALPHA);
@@ -528,8 +526,6 @@ double BalisticSolver::find_total_time(const Parametrs& params) const noexcept
         double t = std::sqrt(4 * params.M_H / std::abs(params.A_0));
         if (t >= 0 && std::isfinite(t)) return t;
     }
-
-
 
     return UNITIALISED_VARIABLE;
 }
@@ -551,24 +547,6 @@ double BalisticSolver::find_faling_time(const Parametrs& params) const noexcept
         return params.T_r;
     }
 
-
-    /* нет смысла - дублируют формулы T_t*/
-    //// 3. Через скорость и угол
-    //if (Parametrs::is_initialised(params.V_0) &&
-    //    Parametrs::is_initialised(params.ALPHA) &&
-    //    Parametrs::is_initialised(params.A_0))
-    //{
-    //    double theta = deg2rad(params.ALPHA);
-    //    double tf = (params.V_0 * std::sin(theta)) / std::abs(params.A_0);
-    //    if (tf >= 0 && std::isfinite(tf)) return tf;
-    //}
-
-    //// 4. Через максимальную высоту
-    //if (Parametrs::is_initialised(params.M_H) && Parametrs::is_initialised(params.A_0)) {
-    //    double tf = std::sqrt(2 * params.M_H / std::abs(params.A_0));
-    //    if (tf >= 0 && std::isfinite(tf)) return tf;
-    //}
-
     return UNITIALISED_VARIABLE;
 }
 
@@ -583,29 +561,6 @@ double BalisticSolver::find_rising_time(const Parametrs& params) const noexcept
     if (Parametrs::is_initialised(params.T_f)) {
         return params.T_f;
     }
-
-    //// 2. Через общее время   -> бесмысленно,тк идет после T_f -> если есть T_t , то найдется и T_f
-    //if (Parametrs::is_initialised(params.T_t)) {
-    //    double tr = params.T_t / 2.0;
-    //    if (tr >= 0 && std::isfinite(tr)) return tr;
-    //}
-
-    /*нет смысла - дублируют формулы T_t*/
-    //// 3. Через скорость и угол
-    //if (Parametrs::is_initialised(params.V_0) &&
-    //    Parametrs::is_initialised(params.ALPHA) &&
-    //    Parametrs::is_initialised(params.A_0))
-    //{
-    //    double theta = deg2rad(params.ALPHA);
-    //    double tr = (params.V_0 * std::sin(theta)) / std::abs(params.A_0);
-    //    if (tr >= 0 && std::isfinite(tr)) return tr;
-    //}
-
-    //// 4. Через максимальную высоту
-    //if (Parametrs::is_initialised(params.M_H) && Parametrs::is_initialised(params.A_0)) {
-    //    double tr = std::sqrt(2 * params.M_H / std::abs(params.A_0));
-    //    if (tr >= 0 && std::isfinite(tr)) return tr;
-    //}
 
     return UNITIALISED_VARIABLE;
 }
